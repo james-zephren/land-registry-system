@@ -256,10 +256,11 @@ Immutable Audit	Every action written to append-only log
 📜 License
 
 MIT © Mulela James Mwongela
-👤 Author
 
+👤 Author
 Mulela James Mwongela
 BSc. Computer Security and Forensics
 Meru University of Science and Technology
 
-Project Supervisor: Dr. Dorothy Bundi
+Project Supervisor: Dr. Dorothy Bundi,
+                    Lecturer, Meru University
