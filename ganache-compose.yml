@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  ganache:
+    image: trufflesuite/ganache-cli:latest
+    container_name: ganache-local
+    command:
+      - ganache-cli
+      - --host=0.0.0.0
+      - --port=7545
+      - --mnemonic="magic credit degree shaft scare salt simple sister skull junior mixture moment"
+      - --accounts=20
+      - --defaultBalanceEther=100
+      - --gasLimit=8000000
+    ports:
+      - "7545:7545"
+    networks:
+      - blockchain-network
+
+networks:
+  blockchain-network:
+    driver: bridge

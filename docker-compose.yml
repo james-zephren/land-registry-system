@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: land_registry_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: land_registry
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - land-registry-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: land_registry_backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/land_registry
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_REFRESH_SECRET: your-super-secret-refresh-key-change-in-production
+      PORT: 3001
+      NODE_ENV: development
+      CORS_ORIGIN: http://localhost:5173
+      GANACHE_RPC_URL: http://host.docker.internal:7545
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - land-registry-network
+    volumes:
+      - ./backend/src:/app/src
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: land_registry_frontend
+    environment:
+      VITE_API_URL: http://localhost:3001/api
+      VITE_GANACHE_RPC_URL: http://localhost:7545
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - land-registry-network
+    volumes:
+      - ./frontend/src:/app/src
+    command: npm run dev
+
+volumes:
+  postgres_data:
+
+networks:
+  land-registry-network:
+    driver: bridge

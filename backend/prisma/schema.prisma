@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  
+  role          String    // CITIZEN, REGISTRAR, SURVEYOR, AUDITOR, ADMIN
+  walletAddress String?   @unique
+  idNumber      String?   @default("")
+  isApproved    Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  lands         Land[]
+  approvals     Approval[]
+  transfersFrom Transfer[] @relation("fromOwner")
+  transfersTo   Transfer[] @relation("toOwner")
+  logs          Log[]
+}
+
+model Land {
+  id             String    @id @default(cuid())
+  parcelId       String    @unique
+  ownerId        String
+  owner          User      @relation(fields: [ownerId], references: [id])
+  location       String
+  area           Float
+  documentHash   String?
+  dataHash       String
+  blockchainHash String
+  status         String    // PENDING, APPROVED, VERIFIED, REJECTED, TRANSFERRED
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  approvals      Approval[]
+  transfers      Transfer[]
+  logs           Log[]
+}
+
+model Approval {
+  id            String    @id @default(cuid())
+  landId        String
+  land          Land      @relation(fields: [landId], references: [id])
+  officerId     String
+  officer       User      @relation(fields: [officerId], references: [id])
+  type          String    // REGISTRATION, TRANSFER
+  status        String    // PENDING, APPROVED, REJECTED
+  comments      String?
+  createdAt     DateTime  @default(now())
+  
+  @@unique([landId, officerId, type])
+}
+
+model Transfer {
+  id                String    @id @default(cuid())
+  landId            String
+  land              Land      @relation(fields: [landId], references: [id])
+  fromOwnerId       String
+  fromOwner         User      @relation("fromOwner", fields: [fromOwnerId], references: [id])
+  toOwnerId         String
+  toOwner           User      @relation("toOwner", fields: [toOwnerId], references: [id])
+  status            String    // PENDING, APPROVED, REJECTED, COMPLETED
+  approvals         Int       @default(0)
+  requiredApprovals Int       @default(2)
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime?
+  
+  logs              Log[]
+}
+
+model Log {
+  id            String    @id @default(cuid())
+  userId        String?
+  user          User?     @relation(fields: [userId], references: [id])
+  action        String
+  details       String    // Store JSON as string
+  ipAddress     String?
+  timestamp     DateTime  @default(now())
+  landId        String?
+  land          Land?     @relation(fields: [landId], references: [id])
+  transferId    String?
+  transfer      Transfer? @relation(fields: [transferId], references: [id])
+}
